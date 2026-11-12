@@ -136,6 +136,13 @@
       <div class="row"><button type="button" id="signOut">Sign out</button></div>
     </div>
     <div class="panel">
+      <h3>Import an older logbook</h3>
+      <p class="plain">Choose the JSON file of your old cases (for example <strong>my-cases.json</strong>). It works once per account and adds nothing if any case in the file is invalid. Best done on a computer.</p>
+      <div class="field"><label for="importFile">File</label><input type="file" id="importFile" accept=".json,application/json"></div>
+      <p class="err" id="importErr" role="alert"></p>
+      <div class="row"><button type="button" id="importBtn">Import cases</button><span class="status" id="importStatus" role="status"></span></div>
+    </div>
+    <div class="panel">
       <h3>Delete account</h3>
       <p class="plain">This permanently deletes your account and every case in it. Download a CSV first if you want a copy.</p>
       <div class="field"><label for="delPass">Password</label><input type="password" id="delPass" autocomplete="current-password"></div>
@@ -148,6 +155,7 @@
 <script src="config.js"></script>
 <script src="meta.js"></script>
 <script src="vendor/supabase-js-2.119.0.umd.js"></script>
+<script src="import.js"></script>
 <script src="app.js"></script>
 </body>
 </html>

@@ -176,6 +176,43 @@
     cases = all.sort(byDate);
   }
 
+  /* ---------- import an older logbook ---------- */
+  // Reads the old-logbook JSON, checks every record first, then adds the cases in batches. If a batch fails,
+  // the cases already added are removed again, so the account is never left half-imported.
+  $('importBtn').addEventListener('click', async function () {
+    $('importErr').textContent = ''; $('importStatus').textContent = '';
+    var file = $('importFile').files[0];
+    if (!file) { $('importErr').textContent = 'Choose the file first.'; return; }
+    if (cases.some(isImported)) { $('importErr').textContent = 'This account already has imported cases. Importing again would add them twice.'; return; }
+    if (file.size > 3000000) { $('importErr').textContent = 'That file is too large to be an old logbook.'; return; }
+    $('importBtn').disabled = true;
+    var ids = [];
+    try {
+      var records;
+      try { records = JSON.parse(await file.text()); } catch (e) { throw new Error('That file is not valid JSON.'); }
+      var prep = window.CaseImport.prepare(records, META);
+      if (prep.error) throw new Error(prep.error + ' Nothing was added.');
+      for (var i = 0; i < prep.rows.length; i += 200) {
+        $('importStatus').textContent = 'Importing ' + Math.min(i + 200, prep.rows.length) + ' of ' + prep.rows.length + '…';
+        ok(await sb.from('cases').insert(prep.rows.slice(i, i + 200)).select('id')).forEach(function (r) { ids.push(r.id); });
+      }
+      await loadCases(); renderAll();
+      $('importFile').value = '';
+      $('importStatus').textContent = 'Imported ' + prep.rows.length + ' cases. See the Dashboard and Cases.';
+    } catch (err) {
+      $('importStatus').textContent = '';
+      var undone = 'Nothing was added.';
+      if (ids.length) {
+        try {
+          for (var k = 0; k < ids.length; k += 200) ok(await sb.from('cases').delete().in('id', ids.slice(k, k + 200)));
+          await loadCases(); renderAll();
+        }
+        catch (e2) { undone = 'Some cases may have been added; check the Cases list before trying again.'; try { await loadCases(); renderAll(); } catch (e3) { /* shown below */ } }
+      }
+      $('importErr').textContent = (isAuthLost(err) ? 'You were signed out. ' : '') + err.message + (/Nothing was added/.test(err.message) ? '' : ' ' + undone);
+    } finally { $('importBtn').disabled = false; }
+  });
+
   /* ---------- dashboard ---------- */
   function bars(el, data, emptyText) {
     el.textContent = '';
