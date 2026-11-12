@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self' https://*.supabase.co; base-uri 'none'; form-action 'self'">
+<meta name="referrer" content="no-referrer">
+<link rel="icon" href="data:,">
+<title>CaseTrace Logbook</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<main class="authpage" id="auth" hidden>
+  <div class="authcard">
+    <div class="brand">
+      <h1>CaseTrace Logbook</h1>
+      <span>Your personal anesthesia case log.</span>
+    </div>
+    <div class="seg" role="group" aria-label="Sign in or create an account" id="authTabs">
+      <button type="button" id="tabIn" aria-pressed="true">Sign in</button>
+      <button type="button" id="tabUp" aria-pressed="false">Create account</button>
+    </div>
+    <form id="authForm" novalidate>
+      <div class="field" id="aEmailWrap"><label for="aEmail">Email</label><input type="email" id="aEmail" autocomplete="email" required></div>
+      <div class="field" id="aPassWrap"><label for="aPass" id="aPassLabel">Password</label><input type="password" id="aPass" autocomplete="current-password" required><small id="aHint"></small></div>
+      <p class="fine" id="aInfo" role="status" hidden></p>
+      <p class="err" id="aErr" role="alert"></p>
+      <button class="primary" type="submit" id="aSubmit">Sign in</button>
+    </form>
+    <button type="button" class="small" id="aForgot">Forgot password?</button>
+    <p class="fine">Never enter patient names, file numbers or dates of birth. Describe the operation only.</p>
+  </div>
+</main>
+
+<div class="wrap" id="app" hidden>
+  <header class="top">
+    <div class="brand">
+      <h1>CaseTrace Logbook</h1>
+      <span id="who"></span>
+    </div>
+    <nav class="tabs" aria-label="Views">
+      <a href="#dashboard" data-view="dashboard">Dashboard</a>
+      <a href="#log" data-view="log">Log a case</a>
+      <a href="#cases" data-view="cases">Cases</a>
+      <a href="#account" data-view="account">Account</a>
+    </nav>
+  </header>
+
+  <div class="notice" id="notice">
+    <p><strong>No patient identifiers.</strong> Never enter names, file numbers, bed numbers or dates of birth.</p>
+    <p id="importNote" hidden></p>
+    <p class="warn" id="flagNote" hidden></p>
+  </div>
+
+  <section class="view" id="view-dashboard">
+    <div class="row end">
+      <h2 class="grow">Dashboard</h2>
+      <div class="field"><label for="period">Period</label><select id="period"></select></div>
+    </div>
+    <p class="empty" id="emptyHint" hidden>No cases yet. <a href="#log">Log your first case</a>.</p>
+    <div class="tiles">
+      <div class="tile"><b id="tTotal">0</b><span>Cases in period</span></div>
+      <div class="tile"><b id="t12">0</b><span>Last 12 months</span></div>
+      <div class="tile"><b id="tNeuro">0</b><span>Spinal, epidural or CSE</span></div>
+      <div class="tile"><b id="tPed">0</b><span>Patients under 12</span></div>
+    </div>
+    <div class="panels">
+      <div class="panel"><h3>Cases per year</h3><div class="bars" id="bYear"></div></div>
+      <div class="panel"><h3>Primary technique</h3><div class="bars" id="bTech"></div></div>
+      <div class="panel"><h3>Specialty</h3><div class="bars" id="bSpec"></div></div>
+      <div class="panel"><h3>Age group</h3><div class="bars" id="bAge"></div></div>
+      <div class="panel" id="pBlock"><h3>Regional blocks by type</h3><div class="bars" id="bBlock"></div></div>
+      <div class="panel" id="pSup"><h3>Supervision level</h3><div class="bars" id="bSup"></div></div>
+      <div class="panel" id="pAsa"><h3>ASA class</h3><div class="bars" id="bAsa"></div></div>
+    </div>
+  </section>
+
+  <section class="view" id="view-log" hidden>
+    <h2 id="formTitle">Log a case</h2>
+    <form class="log" id="caseForm" novalidate>
+      <div class="grid">
+        <div class="field"><label for="fDate">Date</label><input type="date" id="fDate"><div class="checks" id="dateOkWrap" hidden><label for="dateOk"><input type="checkbox" id="dateOk">I have checked this date</label></div></div>
+        <div class="field"><label for="fAge">Age group</label><select id="fAge"></select></div>
+        <div class="field"><label for="fSex">Sex</label><select id="fSex"></select></div>
+        <div class="field"><label for="fAsa">ASA class</label><select id="fAsa"></select></div>
+        <div class="field"><label for="fSpec">Specialty</label><select id="fSpec"></select></div>
+      </div>
+      <div class="field"><label for="fProc">Procedure</label><input type="text" id="fProc" maxlength="200" placeholder="e.g. Laparoscopic cholecystectomy"><small>Describe the operation only. No patient identifiers.</small></div>
+      <div class="field"><label for="fDx">Diagnosis (optional)</label><input type="text" id="fDx" maxlength="200"></div>
+      <div class="grid">
+        <div class="field"><label for="fTech">Primary technique</label><select id="fTech"></select></div>
+        <div class="field"><label for="fAir">Airway</label><select id="fAir"></select></div>
+        <div class="field"><label for="fBlock">Regional block</label><select id="fBlock"></select></div>
+        <div class="field"><label for="fSup">Supervision</label><select id="fSup"></select></div>
+      </div>
+      <fieldset><legend>Extras</legend><div class="checks" id="extras"></div></fieldset>
+      <div class="field"><label for="fComp">Complications</label><input type="text" id="fComp" maxlength="160" placeholder="Leave empty if none"></div>
+      <div class="field"><label for="fNotes">Learning notes</label><textarea id="fNotes" maxlength="400" placeholder="What would you do the same or differently?"></textarea></div>
+      <p class="err" id="formErr" role="alert"></p>
+      <div class="row"><button type="submit" class="primary" id="formSave">Save case</button><button type="button" id="formCancel" hidden>Cancel edit</button><span class="status" id="formStatus" role="status"></span></div>
+    </form>
+  </section>
+
+  <section class="view" id="view-cases" hidden>
+    <div class="row">
+      <h2 class="grow">Cases <span class="count" id="caseCount"></span></h2>
+      <button type="button" id="copyCsv">Copy as CSV</button>
+      <button type="button" id="dlCsv">Download CSV</button>
+    </div>
+    <div class="row end">
+      <div class="field grow"><label for="q">Search procedure or diagnosis</label><input type="text" id="q" placeholder="Type to filter"></div>
+      <div class="field grow"><label for="fltTech">Technique</label><select id="fltTech"><option value="">All techniques</option></select></div>
+      <div class="field grow"><label for="fltYear">Year</label><select id="fltYear"><option value="">All years</option></select></div>
+      <div class="field grow"><label for="fltFlag">Dates</label><select id="fltFlag"><option value="">All</option><option value="flag">Only dates to check</option></select></div>
+    </div>
+    <span class="status" id="listStatus" role="status"></span>
+    <div class="field" id="csvWrap" hidden><label for="csvBox">Copying was blocked. Select this text and copy it yourself.</label><textarea id="csvBox" readonly></textarea></div>
+    <div class="tablebox">
+      <table>
+        <thead><tr><th>Date</th><th>Procedure</th><th>Specialty</th><th>Age, sex</th><th>Technique</th><th>Details</th><th><span class="sr">Actions</span></th></tr></thead>
+        <tbody id="rows"></tbody>
+      </table>
+    </div>
+    <div class="row"><button type="button" id="more" hidden>Show more</button></div>
+    <p class="empty" id="noRows" hidden>No cases match. Clear the filters or log a case.</p>
+  </section>
+
+  <section class="view" id="view-account" hidden>
+    <h2>Account</h2>
+    <div class="panel">
+      <h3>Signed in as</h3>
+      <p class="plain" id="acctEmail"></p>
+      <div class="row"><button type="button" id="signOut">Sign out</button></div>
+    </div>
+    <div class="panel">
+      <h3>Delete account</h3>
+      <p class="plain">This permanently deletes your account and every case in it. Download a CSV first if you want a copy.</p>
+      <div class="field"><label for="delPass">Password</label><input type="password" id="delPass" autocomplete="current-password"></div>
+      <p class="err" id="delErr" role="alert"></p>
+      <div class="row"><button type="button" class="danger" id="delBtn">Delete my account and all cases</button></div>
+    </div>
+  </section>
+</div>
+
+<script src="config.js"></script>
+<script src="meta.js"></script>
+<script src="vendor/supabase-js-2.119.0.umd.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
